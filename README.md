@@ -1,73 +1,58 @@
-# React + TypeScript + Vite
+# Layout Gallery
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A collection of full-viewport, interactive layout patterns built with React 19 + TypeScript + Tailwind CSS + Vite.
 
-Currently, two official plugins are available:
+![Gallery](screenshots/gallery.png)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Layouts
 
-## React Compiler
+### Multi-Column
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Blueprint 001 | Shop 001 — Product Grid | Dash 001 — Metric Dashboard |
+|---|---|---|
+| ![Blueprint 001](screenshots/blueprint-001.png) | ![Shop 001](screenshots/shop-001.png) | ![Dash 001](screenshots/dash-001.png) |
+| Three-column layout with independent scroll, fixed viewport, and blueprint aesthetic. | E-commerce storefront with filterable product grid, cart, and a Tambo chat bar. | Analytics dashboard with metric cards, charts, and progress rings generated via Tambo chat. |
 
-## Expanding the ESLint configuration
+### Slide & Overlay
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+| Blueprint 002 | Feed 001 — Social Stream |
+|---|---|
+| ![Blueprint 002](screenshots/blueprint-002.png) | ![Feed 001](screenshots/feed-001.png) |
+| Three-column layout with a slide-over detail panel that reveals a fourth layer on demand. | Single-column social feed with timeline rail and a Tambo chat panel that generates post cards. |
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Infinite Canvas
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+| Canvas 001 | Canvas 002 — Beat Pads |
+|---|---|
+| ![Canvas 001](screenshots/canvas-001.png) | ![Canvas 002](screenshots/canvas-002.png) |
+| Infinite canvas with draggable floating panels, zoom controls, and a dot-grid background. | Musician's canvas with draggable beat pads, piano roll sequencer, and a chat window that spawns new pads. |
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Getting Started
+
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Commands
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev        # Start Vite dev server with HMR
+npm run build      # TypeScript check + Vite production build
+npm run lint       # ESLint (flat config, ESLint 9+)
+npm run preview    # Preview production build locally
 ```
+
+## Adding a New Layout
+
+1. Create a directory under `src/layouts/` (e.g., `my-layout/`)
+2. Add the component file and optional CSS
+3. Register it in `src/layouts/registry.ts` with metadata and a lazy import
+
+## Tech Stack
+
+- **React 19** with TypeScript (strict mode)
+- **Tailwind CSS** — dark blueprint aesthetic with deep blues, cyan accents, monospace throughout
+- **Vite** — dev server + production bundler
+- **React Router** — `/` gallery grid, `/layouts/:slug` individual layouts
+- **Code-splitting** via `React.lazy()` per layout
