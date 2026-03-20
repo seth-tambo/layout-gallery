@@ -33,11 +33,10 @@ interface ChatMessage {
     from: 'user' | 'system';
 }
 
-interface PianoRollInstance {
+interface OpenRoll {
     padId: string;
     x: number;
     y: number;
-    notes: Set<string>;
 }
 
 const initialPads: BeatPad[] = [
@@ -51,29 +50,22 @@ const initialPads: BeatPad[] = [
     })),
 ];
 
-// Pre-seed two piano rolls so the canvas looks alive
-const initialPianoRolls: PianoRollInstance[] = [
-    {
-        padId: 'pad-0', // Kick
-        x: 500,
-        y: -200,
-        notes: new Set([
-            'C3-0', 'C3-4', 'C3-8', 'C3-12',
-            'C3-16', 'C3-20', 'C3-24', 'C3-28',
-            'E3-2', 'E3-10', 'E3-18', 'E3-26',
-        ]),
-    },
-    {
-        padId: 'pad-1', // Snare
-        x: 500,
-        y: 360,
-        notes: new Set([
-            'D4-4', 'D4-12', 'D4-20', 'D4-28',
-            'E4-6', 'E4-14', 'E4-22', 'E4-30',
-            'F#4-7', 'F#4-15', 'F#4-23', 'F#4-31',
-        ]),
-    },
-];
+// Pre-seed notes so pads have content even before opening their roll
+const initialPadNotes = new Map<string, Set<string>>([
+    ['pad-0', new Set([
+        'C3-0', 'C3-4', 'C3-8', 'C3-12',
+        'C3-16', 'C3-20', 'C3-24', 'C3-28',
+        'E3-2', 'E3-10', 'E3-18', 'E3-26',
+    ])],
+    ['pad-1', new Set([
+        'D4-4', 'D4-12', 'D4-20', 'D4-28',
+        'E4-6', 'E4-14', 'E4-22', 'E4-30',
+        'F#4-7', 'F#4-15', 'F#4-23', 'F#4-31',
+    ])],
+]);
+
+// Only one piano roll open at start
+const initialOpenRoll: OpenRoll = { padId: 'pad-0', x: 500, y: -200 };
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 2;
@@ -88,7 +80,8 @@ export default function Canvas002() {
     >(null);
     const [pads, setPads] = useState(initialPads);
     const [activePad, setActivePad] = useState<string | null>(null);
-    const [pianoRolls, setPianoRolls] = useState(initialPianoRolls);
+    const [padNotes, setPadNotes] = useState(initialPadNotes);
+    const [openRoll, setOpenRoll] = useState<OpenRoll | null>(initialOpenRoll);
     const [messages, setMessages] = useState<ChatMessage[]>([
         { id: 'welcome', text: 'Type a message to drop a new beat pad onto the canvas.', from: 'system' },
     ]);
@@ -131,9 +124,8 @@ export default function Canvas002() {
         e.stopPropagation();
     }, [pads, camera]);
 
-    const handlePianoRollDragStart = useCallback((e: MouseEvent, padId: string) => {
-        const pr = pianoRolls.find((p) => p.padId === padId);
-        if (!pr) return;
+    const handlePianoRollDragStart = useCallback((e: MouseEvent) => {
+        if (!openRoll) return;
         const rect = containerRef.current?.getBoundingClientRect();
         if (!rect) return;
 
@@ -142,14 +134,14 @@ export default function Canvas002() {
 
         setDragging({
             type: 'pianoroll',
-            padId,
-            offsetX: canvasX - pr.x,
-            offsetY: canvasY - pr.y,
+            padId: openRoll.padId,
+            offsetX: canvasX - openRoll.x,
+            offsetY: canvasY - openRoll.y,
         });
 
         e.preventDefault();
         e.stopPropagation();
-    }, [pianoRolls, camera]);
+    }, [openRoll, camera]);
 
     const handleMouseMove = useCallback((e: MouseEvent) => {
         if (!dragging) return;
@@ -176,12 +168,10 @@ export default function Canvas002() {
             if (!rect) return;
             const canvasX = (e.clientX - rect.left - rect.width / 2) / camera.zoom - camera.x;
             const canvasY = (e.clientY - rect.top - rect.height / 2) / camera.zoom - camera.y;
-            setPianoRolls((prev) =>
-                prev.map((pr) =>
-                    pr.padId === dragging.padId
-                        ? { ...pr, x: canvasX - dragging.offsetX, y: canvasY - dragging.offsetY }
-                        : pr
-                )
+            setOpenRoll((prev) =>
+                prev && prev.padId === dragging.padId
+                    ? { ...prev, x: canvasX - dragging.offsetX, y: canvasY - dragging.offsetY }
+                    : prev
             );
         }
     }, [dragging, camera]);
@@ -205,37 +195,32 @@ export default function Canvas002() {
         setTimeout(() => setActivePad(null), 150);
     }, []);
 
-    // --- Piano roll management ---
+    // --- Piano roll management (only one open at a time) ---
     const openPianoRoll = useCallback((padId: string) => {
-        if (pianoRolls.some((pr) => pr.padId === padId)) return;
+        if (openRoll?.padId === padId) return;
         const pad = pads.find((p) => p.id === padId);
         if (!pad) return;
 
-        setPianoRolls((prev) => [
-            ...prev,
-            {
-                padId,
-                x: pad.x + pad.size + 40,
-                y: pad.y - 50,
-                notes: new Set(),
-            },
-        ]);
-    }, [pianoRolls, pads]);
+        setOpenRoll({
+            padId,
+            x: pad.x + pad.size + 40,
+            y: pad.y - 50,
+        });
+    }, [openRoll, pads]);
 
-    const closePianoRoll = useCallback((padId: string) => {
-        setPianoRolls((prev) => prev.filter((pr) => pr.padId !== padId));
+    const closePianoRoll = useCallback(() => {
+        setOpenRoll(null);
     }, []);
 
     const handleToggleNote = useCallback((padId: string, noteKey: string) => {
-        setPianoRolls((prev) =>
-            prev.map((pr) => {
-                if (pr.padId !== padId) return pr;
-                const next = new Set(pr.notes);
-                if (next.has(noteKey)) next.delete(noteKey);
-                else next.add(noteKey);
-                return { ...pr, notes: next };
-            })
-        );
+        setPadNotes((prev) => {
+            const next = new Map(prev);
+            const notes = new Set(next.get(padId) || []);
+            if (notes.has(noteKey)) notes.delete(noteKey);
+            else notes.add(noteKey);
+            next.set(padId, notes);
+            return next;
+        });
     }, []);
 
     // --- Chat ---
@@ -272,7 +257,7 @@ export default function Canvas002() {
     }, [input]);
 
     // --- Helpers for rendering ---
-    const hasPianoRoll = (padId: string) => pianoRolls.some((pr) => pr.padId === padId);
+    const hasPianoRoll = (padId: string) => openRoll?.padId === padId;
 
     return (
         <div className="canvas-002 h-dvh overflow-hidden bg-[#0c0a14] select-none font-mono">
@@ -299,23 +284,23 @@ export default function Canvas002() {
                         transformOrigin: '0 0',
                     }}
                 >
-                    {/* Tether lines between pads and their piano rolls */}
+                    {/* Tether line between pad and its piano roll */}
                     <svg
                         className="absolute pointer-events-none"
                         style={{ left: 0, top: 0, overflow: 'visible', zIndex: 0 }}
                         width="0"
                         height="0"
                     >
-                        {pianoRolls.map((pr) => {
-                            const pad = pads.find((p) => p.id === pr.padId);
+                        {openRoll && (() => {
+                            const pad = pads.find((p) => p.id === openRoll.padId);
                             if (!pad) return null;
                             const padCx = pad.x + pad.size / 2;
                             const padCy = pad.y + pad.size / 2;
-                            const prAx = pr.x;
-                            const prAy = pr.y + 20;
+                            const prAx = openRoll.x;
+                            const prAy = openRoll.y + 20;
                             const midX = (padCx + prAx) / 2;
                             return (
-                                <g key={pr.padId}>
+                                <g>
                                     <path
                                         d={`M ${padCx} ${padCy} C ${midX} ${padCy} ${midX} ${prAy} ${prAx} ${prAy}`}
                                         stroke={pad.color.glow}
@@ -328,7 +313,7 @@ export default function Canvas002() {
                                     <circle cx={prAx} cy={prAy} r={4} fill={pad.color.glow} fillOpacity={0.4} />
                                 </g>
                             );
-                        })}
+                        })()}
                     </svg>
 
                     {pads.map((pad, i) => (
@@ -358,7 +343,8 @@ export default function Canvas002() {
                                 onMouseDown={(e) => {
                                     e.stopPropagation();
                                     setPads((prev) => prev.filter((p) => p.id !== pad.id));
-                                    setPianoRolls((prev) => prev.filter((pr) => pr.padId !== pad.id));
+                                    setOpenRoll((prev) => prev?.padId === pad.id ? null : prev);
+                                    setPadNotes((prev) => { const next = new Map(prev); next.delete(pad.id); return next; });
                                 }}
                             >
                                 &times;
@@ -395,26 +381,26 @@ export default function Canvas002() {
                         </div>
                     ))}
 
-                    {/* Piano rolls */}
-                    {pianoRolls.map((pr, i) => {
-                        const pad = pads.find((p) => p.id === pr.padId);
+                    {/* Piano roll (single) */}
+                    {openRoll && (() => {
+                        const pad = pads.find((p) => p.id === openRoll.padId);
                         if (!pad) return null;
                         return (
                             <PianoRoll
-                                key={pr.padId}
-                                x={pr.x}
-                                y={pr.y}
-                                zIndex={pads.length + i + 1}
+                                key={openRoll.padId}
+                                x={openRoll.x}
+                                y={openRoll.y}
+                                zIndex={pads.length + 1}
                                 padLabel={pad.color.label}
                                 padBg={pad.color.bg}
                                 padGlow={pad.color.glow}
-                                notes={pr.notes}
-                                onToggleNote={(noteKey) => handleToggleNote(pr.padId, noteKey)}
-                                onTitleBarMouseDown={(e) => handlePianoRollDragStart(e, pr.padId)}
-                                onClose={() => closePianoRoll(pr.padId)}
+                                notes={padNotes.get(openRoll.padId) || new Set()}
+                                onToggleNote={(noteKey) => handleToggleNote(openRoll.padId, noteKey)}
+                                onTitleBarMouseDown={handlePianoRollDragStart}
+                                onClose={closePianoRoll}
                             />
                         );
-                    })}
+                    })()}
                 </div>
             </div>
 

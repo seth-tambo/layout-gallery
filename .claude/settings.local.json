@@ -9,7 +9,9 @@
       "Bash(curl -s https://raw.githubusercontent.com/actions/upload-pages-artifact/main/README.md)",
       "WebFetch(domain:vite.dev)",
       "Bash(curl:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(npx tsc:*)",
+      "Bash(grep -E \"\\(\\\\.tsx|\\\\.css\\)$\")"
     ]
   }
 }

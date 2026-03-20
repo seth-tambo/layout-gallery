@@ -1,0 +1,53 @@
+/* Chat scrollbar */
+.feed-001 .chat-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.feed-001 .chat-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.feed-001 .chat-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+.feed-001 .chat-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+/* Feed scrollbar */
+.feed-001 .feed-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.feed-001 .feed-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.feed-001 .feed-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+.feed-001 .feed-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+/* Feed post entry animation */
+@keyframes feed-enter {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.feed-001 .feed-enter {
+    animation: feed-enter 300ms ease-out both;
+}

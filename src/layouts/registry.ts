@@ -44,4 +44,25 @@ export const layouts: LayoutEntry[] = [
         category: 'canvas',
         component: lazy(() => import('./canvas-002/Canvas002.tsx')),
     },
+    {
+        slug: 'feed-001',
+        name: 'Feed 001 — Social Stream',
+        description: 'Single-column social feed with timeline rail and a Tambo chat panel that generates post cards.',
+        category: 'slide-overlay',
+        component: lazy(() => import('./feed-001/Feed001.tsx')),
+    },
+    {
+        slug: 'shop-001',
+        name: 'Shop 001 — Product Grid',
+        description: 'E-commerce storefront with filterable product grid, cart, and a Tambo chat bar that generates new products.',
+        category: 'multi-column',
+        component: lazy(() => import('./shop-001/Shop001.tsx')),
+    },
+    {
+        slug: 'dash-001',
+        name: 'Dash 001 — Metric Dashboard',
+        description: 'Analytics dashboard with metric cards, charts, and progress rings generated via Tambo chat.',
+        category: 'multi-column',
+        component: lazy(() => import('./dash-001/Dash001.tsx')),
+    },
 ];

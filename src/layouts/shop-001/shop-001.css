@@ -1,0 +1,53 @@
+/* Chat scrollbar */
+.shop-001 .chat-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.shop-001 .chat-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.shop-001 .chat-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+.shop-001 .chat-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+/* Grid scrollbar */
+.shop-001 .grid-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.shop-001 .grid-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.shop-001 .grid-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+.shop-001 .grid-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+/* Product card entry animation */
+@keyframes product-enter {
+    0% {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.shop-001 .product-enter {
+    animation: product-enter 300ms ease-out both;
+}

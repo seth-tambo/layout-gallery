@@ -1,0 +1,53 @@
+/* Chat panel scrollbar */
+.dash-001 .chat-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.dash-001 .chat-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.dash-001 .chat-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+.dash-001 .chat-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+/* Dashboard main area scrollbar */
+.dash-001 .dash-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.dash-001 .dash-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.dash-001 .dash-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+.dash-001 .dash-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+/* Widget enter animation */
+@keyframes widget-enter {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dash-001 .widget-enter {
+    animation: widget-enter 300ms ease-out both;
+}
