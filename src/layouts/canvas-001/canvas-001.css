@@ -1,0 +1,5 @@
+/* Dot grid background — moves with the canvas transform */
+.canvas-001 .canvas-dots {
+    background-image: radial-gradient(circle, rgba(30, 58, 95, 0.35) 1px, transparent 1px);
+    background-size: 24px 24px;
+}

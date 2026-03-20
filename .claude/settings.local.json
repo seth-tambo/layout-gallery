@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vite:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(curl -s https://vite.dev/guide/static-deploy.html)",
+      "Bash(curl -s https://raw.githubusercontent.com/actions/deploy-pages/main/README.md)",
+      "Bash(curl -s https://raw.githubusercontent.com/actions/upload-pages-artifact/main/README.md)",
+      "WebFetch(domain:vite.dev)",
+      "Bash(curl:*)",
+      "WebSearch"
+    ]
+  }
+}
