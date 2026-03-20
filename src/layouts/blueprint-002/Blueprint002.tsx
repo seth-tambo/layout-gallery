@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import type { FormEvent } from 'react';
 import { BackToGallery } from '../../shared/BackToGallery.tsx';
 import './blueprint-002.css';
 
@@ -32,8 +33,29 @@ const listItems = Array.from({ length: 30 }, (_, i) => ({
     description: 'A brief description of this item and what it contains.',
 }));
 
-const sectionDetails = Array.from({ length: 8 }, (_, i) => ({
-    id: i,
+interface RelatedItem {
+    id: string;
+    label: string;
+    type: string;
+}
+
+interface SectionData {
+    id: string;
+    title: string;
+    fields: { label: string; value: string }[];
+    notes: string;
+    relatedItems: RelatedItem[];
+}
+
+interface ChatMessage {
+    id: string;
+    text: string;
+    from: 'user' | 'ai';
+    componentId?: string;
+}
+
+const initialSections: SectionData[] = Array.from({ length: 8 }, (_, i) => ({
+    id: `section-${i}`,
     title: `Section ${String(i + 1).padStart(2, '0')}`,
     fields: [
         { label: 'Status', value: i % 3 === 0 ? 'Active' : i % 3 === 1 ? 'Pending' : 'Draft' },
@@ -50,9 +72,90 @@ const sectionDetails = Array.from({ length: 8 }, (_, i) => ({
     })),
 }));
 
+let genCounter = 0;
+
 export default function Blueprint002() {
-    const [activeSection, setActiveSection] = useState<number | null>(null);
-    const detail = activeSection !== null ? sectionDetails[activeSection] : null;
+    const [activeSection, setActiveSection] = useState<string | null>(null);
+    const [sections, setSections] = useState<SectionData[]>(initialSections);
+    const [messages, setMessages] = useState<ChatMessage[]>([
+        { id: 'welcome', text: 'Ask me to add metadata, related items, or notes to this section.', from: 'ai' },
+    ]);
+    const [input, setInput] = useState('');
+    const chatEndRef = useRef<HTMLDivElement>(null);
+
+    const detail = activeSection !== null ? sections.find((s) => s.id === activeSection) ?? null : null;
+
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
+    const handleSend = useCallback((e: FormEvent) => {
+        e.preventDefault();
+        const text = input.trim();
+        if (!text || !activeSection) return;
+
+        setMessages((prev) => [
+            ...prev,
+            { id: `user-${Date.now()}`, text, from: 'user' },
+        ]);
+        setInput('');
+
+        setTimeout(() => {
+            const genId = `gen-${genCounter++}`;
+            // Decide what to generate based on keywords
+            const lower = text.toLowerCase();
+            let responseText: string;
+
+            if (lower.includes('note') || lower.includes('description') || lower.includes('update')) {
+                // Add to notes
+                setSections((prev) =>
+                    prev.map((s) =>
+                        s.id === activeSection
+                            ? { ...s, notes: s.notes + `\n\n${text}` }
+                            : s
+                    )
+                );
+                responseText = `Added note to section.`;
+            } else if (lower.includes('field') || lower.includes('meta') || lower.includes('property') || lower.includes('set')) {
+                // Add metadata field
+                const label = text.length > 20 ? text.slice(0, 20) + '…' : text;
+                const value = 'Generated';
+                setSections((prev) =>
+                    prev.map((s) =>
+                        s.id === activeSection
+                            ? { ...s, fields: [...s.fields, { label, value }] }
+                            : s
+                    )
+                );
+                responseText = `Added metadata field "${label}".`;
+            } else {
+                // Default: add related item
+                const label = text.length > 24 ? text.slice(0, 24) + '…' : text;
+                const newRelated: RelatedItem = {
+                    id: genId,
+                    label,
+                    type: 'Generated',
+                };
+                setSections((prev) =>
+                    prev.map((s) =>
+                        s.id === activeSection
+                            ? { ...s, relatedItems: [...s.relatedItems, newRelated] }
+                            : s
+                    )
+                );
+                responseText = `Added related item "${label}".`;
+            }
+
+            setMessages((prev) => [
+                ...prev,
+                { id: `ai-${Date.now()}`, text: responseText, from: 'ai', componentId: genId },
+            ]);
+        }, 300);
+    }, [input, activeSection]);
+
+    const openSectionWithChat = useCallback((sectionId: string) => {
+        setActiveSection(sectionId);
+    }, []);
 
     return (
         <div className="blueprint-002 flex flex-col h-dvh overflow-hidden bg-[#0a1628] blueprint-grid text-[#c8e8f8]">
@@ -201,20 +304,31 @@ export default function Blueprint002() {
                     <div className="absolute inset-0 overflow-y-auto blueprint-scroll bg-[#0a1628] blueprint-grid">
                         <div className="p-5 lg:p-8">
                             <div className="mb-8">
-                                <h2 className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#5ca0d0] mb-6">
-                                    Content
-                                </h2>
-                                <h3 className="text-lg font-mono text-[#b0dcf4] mb-2">
-                                    Item 001
-                                </h3>
-                                <p className="text-xs font-mono text-[#5ca0d0] mb-6">
-                                    Last modified 3 hours ago
-                                </p>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h2 className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#5ca0d0] mb-6">
+                                            Content
+                                        </h2>
+                                        <h3 className="text-lg font-mono text-[#b0dcf4] mb-2">
+                                            Item 001
+                                        </h3>
+                                        <p className="text-xs font-mono text-[#5ca0d0] mb-6">
+                                            Last modified 3 hours ago
+                                        </p>
+                                    </div>
+                                    {/* Ask Tambo trigger */}
+                                    <button
+                                        onClick={() => openSectionWithChat(sections[0].id)}
+                                        className="text-[10px] font-mono uppercase tracking-[0.15em] px-3 py-1.5 rounded border border-[#305878] text-[#78bce8] hover:bg-[#1a3555] hover:border-[#5ca0d0] transition-all cursor-pointer"
+                                    >
+                                        Ask Tambo
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="space-y-8">
-                                {sectionDetails.map((section, i) => (
-                                    <div key={i}>
+                                {sections.map((section) => (
+                                    <div key={section.id}>
                                         <h4 className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#5ca0d0] mb-3">
                                             {section.title}
                                         </h4>
@@ -237,7 +351,7 @@ export default function Blueprint002() {
                                                     ))}
                                                 </div>
                                                 <button
-                                                    onClick={() => setActiveSection(i)}
+                                                    onClick={() => setActiveSection(section.id)}
                                                     className="text-[10px] font-mono uppercase tracking-[0.15em] px-3 py-1.5 rounded border border-[#1e3a5f] text-[#78bce8] hover:bg-[#1a3555] hover:text-[#c8e8f8] hover:border-[#5ca0d0] transition-all cursor-pointer"
                                                 >
                                                     Details &rarr;
@@ -284,9 +398,9 @@ export default function Blueprint002() {
                                             Metadata
                                         </h4>
                                         <div className="space-y-2">
-                                            {detail.fields.map((field) => (
+                                            {detail.fields.map((field, i) => (
                                                 <div
-                                                    key={field.label}
+                                                    key={`${field.label}-${i}`}
                                                     className="flex items-center justify-between py-2 px-3 rounded border border-[#1e3555] bg-[#0b1a30]/50"
                                                 >
                                                     <span className="text-[10px] font-mono text-[#5ca0d0] uppercase tracking-[0.15em]">
@@ -306,14 +420,14 @@ export default function Blueprint002() {
                                             Notes
                                         </h4>
                                         <div className="border border-[#1e3555] rounded p-4 bg-[#0b1a30]/50">
-                                            <p className="text-xs leading-relaxed text-[#7cb4d8]">
+                                            <p className="text-xs leading-relaxed text-[#7cb4d8] whitespace-pre-line">
                                                 {detail.notes}
                                             </p>
                                         </div>
                                     </div>
 
                                     {/* Related items */}
-                                    <div>
+                                    <div className="mb-6">
                                         <h4 className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#5ca0d0] mb-3">
                                             Related
                                         </h4>
@@ -326,12 +440,70 @@ export default function Blueprint002() {
                                                     <span className="text-xs font-mono text-[#9cd0f0]">
                                                         {rel.label}
                                                     </span>
-                                                    <span className="text-[10px] font-mono px-2 py-0.5 rounded border border-[#305878] text-[#5ca0d0]">
+                                                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+                                                        rel.type === 'Generated'
+                                                            ? 'border-[#4a7a3a] text-[#7cb878]'
+                                                            : 'border-[#305878] text-[#5ca0d0]'
+                                                    }`}>
                                                         {rel.type}
                                                     </span>
                                                 </li>
                                             ))}
                                         </ul>
+                                    </div>
+
+                                    {/* Tambo Chat — inside slide-over */}
+                                    <div className="border-t border-[#1e3a5f] pt-5">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <h4 className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#78bce8]">
+                                                Tambo
+                                            </h4>
+                                            <span className="text-[10px] font-mono text-[#5ca0d0]">
+                                                Section Assistant
+                                            </span>
+                                        </div>
+
+                                        {/* Messages */}
+                                        <div className="max-h-48 overflow-y-auto chat-scroll space-y-2 mb-3">
+                                            {messages.map((msg) => (
+                                                <div
+                                                    key={msg.id}
+                                                    className={`rounded px-3 py-2 text-xs font-mono leading-relaxed ${
+                                                        msg.from === 'user'
+                                                            ? 'bg-[#1a3555] text-[#c8e8f8] ml-8'
+                                                            : 'bg-[#0b1a30] text-[#8cc0e4] mr-8 border border-[#1e3555]'
+                                                    }`}
+                                                >
+                                                    {msg.text}
+                                                    {msg.componentId && (
+                                                        <div className="flex items-center gap-1.5 mt-1.5 pt-1.5 border-t border-[#1e3555]">
+                                                            <div className="w-1.5 h-3 rounded-sm bg-[#78bce8]" />
+                                                            <span className="text-[10px] text-[#5ca0d0]">Updated section</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                            <div ref={chatEndRef} />
+                                        </div>
+
+                                        {/* Input */}
+                                        <form onSubmit={handleSend}>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={input}
+                                                    onChange={(e) => setInput(e.target.value)}
+                                                    placeholder="Add metadata, items, or notes..."
+                                                    className="flex-1 bg-[#0b1a30] border border-[#1e3a5f] rounded px-3 py-1.5 text-xs font-mono text-[#c8e8f8] placeholder-[#3a6080] focus:outline-none focus:border-[#78bce8]"
+                                                />
+                                                <button
+                                                    type="submit"
+                                                    className="px-3 py-1.5 rounded bg-[#1a3555] hover:bg-[#1e4a6f] text-[10px] font-mono uppercase tracking-wider text-[#78bce8] border border-[#1e3a5f] transition-colors cursor-pointer"
+                                                >
+                                                    Send
+                                                </button>
+                                            </div>
+                                        </form>
                                     </div>
                                 </div>
                             </>

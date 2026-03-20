@@ -59,3 +59,22 @@
 .blueprint-002 .slide-over-open {
     transform: translateX(0);
 }
+
+/* Chat scrollbar */
+.blueprint-002 .chat-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.blueprint-002 .chat-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.blueprint-002 .chat-scroll::-webkit-scrollbar-thumb {
+    background: #1e3a5f;
+    border-radius: 2px;
+}
+
+.blueprint-002 .chat-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #1e3a5f transparent;
+}

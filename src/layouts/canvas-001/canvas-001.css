@@ -3,3 +3,22 @@
     background-image: radial-gradient(circle, rgba(30, 58, 95, 0.35) 1px, transparent 1px);
     background-size: 24px 24px;
 }
+
+/* Chat scrollbar */
+.canvas-001 .chat-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.canvas-001 .chat-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.canvas-001 .chat-scroll::-webkit-scrollbar-thumb {
+    background: #1e3a5f;
+    border-radius: 2px;
+}
+
+.canvas-001 .chat-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #1e3a5f transparent;
+}

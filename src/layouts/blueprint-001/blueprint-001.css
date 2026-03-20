@@ -48,3 +48,22 @@
 .blueprint-001 details summary::-webkit-details-marker {
     display: none;
 }
+
+/* Chat scrollbar */
+.blueprint-001 .chat-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.blueprint-001 .chat-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.blueprint-001 .chat-scroll::-webkit-scrollbar-thumb {
+    background: #1e3a5f;
+    border-radius: 2px;
+}
+
+.blueprint-001 .chat-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #1e3a5f transparent;
+}

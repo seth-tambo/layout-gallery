@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type { MouseEvent, FormEvent } from 'react';
 import { BackToGallery } from '../../shared/BackToGallery.tsx';
 import { PianoRoll } from './PianoRoll.tsx';
@@ -30,7 +30,8 @@ interface BeatPad {
 interface ChatMessage {
     id: string;
     text: string;
-    from: 'user' | 'system';
+    from: 'user' | 'ai';
+    componentId?: string;
 }
 
 interface OpenRoll {
@@ -83,7 +84,7 @@ export default function Canvas002() {
     const [padNotes, setPadNotes] = useState(initialPadNotes);
     const [openRoll, setOpenRoll] = useState<OpenRoll | null>(initialOpenRoll);
     const [messages, setMessages] = useState<ChatMessage[]>([
-        { id: 'welcome', text: 'Type a message to drop a new beat pad onto the canvas.', from: 'system' },
+        { id: 'welcome', text: 'Type a message to drop a new beat pad onto the canvas.', from: 'ai' },
     ]);
     const [input, setInput] = useState('');
     const [chatMinimized, setChatMinimized] = useState(false);
@@ -223,6 +224,11 @@ export default function Canvas002() {
         });
     }, []);
 
+    // Auto-scroll chat on new messages
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
     // --- Chat ---
     const handleSend = useCallback((e: FormEvent) => {
         e.preventDefault();
@@ -233,27 +239,31 @@ export default function Canvas002() {
         const newPadId = `pad-${padCounter.current}`;
         padCounter.current += 1;
 
-        // Scatter new pads around the visible area
-        const angle = Math.random() * Math.PI * 2;
-        const radius = 200 + Math.random() * 200;
-        const newPad: BeatPad = {
-            id: newPadId,
-            x: Math.round(Math.cos(angle) * radius),
-            y: Math.round(Math.sin(angle) * radius),
-            color,
-            size: 110,
-        };
-
-        setPads((prev) => [...prev, newPad]);
-
+        // Add user message immediately
         setMessages((prev) => [
             ...prev,
             { id: `user-${Date.now()}`, text, from: 'user' },
-            { id: `sys-${Date.now()}`, text: `Dropped a ${color.label} pad onto the canvas.`, from: 'system' },
         ]);
         setInput('');
 
-        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+        // Simulate AI response after delay
+        setTimeout(() => {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 200 + Math.random() * 200;
+            const newPad: BeatPad = {
+                id: newPadId,
+                x: Math.round(Math.cos(angle) * radius),
+                y: Math.round(Math.sin(angle) * radius),
+                color,
+                size: 110,
+            };
+
+            setPads((prev) => [...prev, newPad]);
+            setMessages((prev) => [
+                ...prev,
+                { id: `ai-${Date.now()}`, text: `Dropped a ${color.label} pad onto the canvas.`, from: 'ai', componentId: newPadId },
+            ]);
+        }, 300);
     }, [input]);
 
     // --- Helpers for rendering ---
@@ -439,11 +449,11 @@ export default function Canvas002() {
                 >
                     <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-bold uppercase tracking-wider text-emerald-100">
-                            Beat Chat
+                            Tambo
                         </h3>
                         {!chatMinimized && (
                             <p className="text-sm text-white/80 mt-0.5">
-                                Send a message to add a pad
+                                Beat Pad Generator
                             </p>
                         )}
                     </div>
@@ -462,18 +472,30 @@ export default function Canvas002() {
 
                         {/* Messages */}
                         <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0 chat-scroll">
-                            {messages.map((msg) => (
-                                <div
-                                    key={msg.id}
-                                    className={`rounded-lg px-3 py-2 text-sm leading-relaxed ${
-                                        msg.from === 'user'
-                                            ? 'bg-emerald-600/30 text-emerald-100 ml-6'
-                                            : 'bg-white/5 text-white/90 mr-6'
-                                    }`}
-                                >
-                                    {msg.text}
-                                </div>
-                            ))}
+                            {messages.map((msg) => {
+                                const linkedPad = msg.componentId ? pads.find((p) => p.id === msg.componentId) : null;
+                                return (
+                                    <div
+                                        key={msg.id}
+                                        className={`rounded-lg px-3 py-2 text-sm leading-relaxed ${
+                                            msg.from === 'user'
+                                                ? 'bg-emerald-600/30 text-emerald-100 ml-6'
+                                                : 'bg-white/5 text-white/90 mr-6'
+                                        }`}
+                                    >
+                                        {msg.text}
+                                        {linkedPad && (
+                                            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/10">
+                                                <div
+                                                    className="w-5 h-5 rounded"
+                                                    style={{ backgroundColor: linkedPad.color.bg, boxShadow: `0 0 6px ${linkedPad.color.glow}40` }}
+                                                />
+                                                <span className="text-xs text-white/60">{linkedPad.color.label} pad</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                             <div ref={chatEndRef} />
                         </div>
 
